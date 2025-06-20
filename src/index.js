@@ -2,17 +2,9 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import pool from './config/db.js';
-
 dotenv.config();
-
-console.log('Environment Variables:', {
-    PORT: process.env.PORT,
-    DB_USER: process.env.DB_USER,
-    DB_HOST: process.env.DB_HOST,
-    DB_NAME: process.env.DB_NAME,
-    DB_PORT: process.env.DB_PORT,
-    DB_PASSWORD: process.env.DB_PASSWORD,
-});
+import userRoutes from './routes/userRoutes.js';
+import errorHandler from './middlewares/errorHandler.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -22,8 +14,14 @@ app.use(cors());
 app.use(express.json());
 
 //routes
+app.use('/api', userRoutes);
 
 //error handling
+app.use(errorHandler)
+
+//create user table if it doesn't exist
+import createUserTable from './data/createUserTable.js';
+await createUserTable();
 
 //testing the database connection
 app.get('/', async (req, res) => {
@@ -31,10 +29,6 @@ app.get('/', async (req, res) => {
     res.send(`Connected to database: ${result.rows[0].current_database}`);
 });
 
-app.use((err, req, res, next) => {
-    console.error(err.stack);
-    res.status(500).send('Something broke!');
-});
 
 //server
 app.listen(PORT, () => {
